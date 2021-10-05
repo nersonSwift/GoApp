@@ -1,0 +1,68 @@
+version: '3.3'
+
+networks:
+  new_b:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${BRIDGE}/24
+services:
+
+  mysql-stats:
+    container_name: mysql_app
+    restart: unless-stopped
+    networks:
+      - new_b
+    build:
+      context: .
+      dockerfile: sql/Dockerfile
+    ports:
+      - :${SQL_PORT}:3306
+    env_file: .env
+    environment:
+      SQL_BASE_NAME1: ${SQL_BASE_NAME}
+    volumes:
+      - ./base/mysql:/var/lib/mysql
+
+  rmq-stats:
+    image: rabbitmq:3-management-alpine
+    container_name: rmq-stats-dev
+    networks:
+      - new_b
+    restart: unless-stopped
+    ports:
+      - :5672:5672
+    env_file: .env
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+
+  application:
+    container_name: go_app
+    env_file: .env
+    networks:
+      - new_b
+    build:
+      context: .
+      dockerfile: first_app/Dockerfile
+    restart: always
+    stop_grace_period: 1m
+    volumes:
+      - ./logs:/var/log/application
+    ports:
+      - ${FIRST_APP_PORT}:${FIRST_APP_PORT}
+
+  application2:
+    container_name: go_app1
+    env_file: .env
+    networks:
+      - new_b
+    build:
+      context: .
+      dockerfile: second_app/Dockerfile
+    restart: always
+    stop_grace_period: 1m
+    volumes:
+      - ./logs:/var/log/application
+    ports:
+      - ${SECOND_APP_PORT}:${SECOND_APP_PORT}
