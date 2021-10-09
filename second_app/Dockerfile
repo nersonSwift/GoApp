@@ -2,15 +2,15 @@ FROM golang:1.13.6-alpine AS build-stage
 
 WORKDIR /go/src/application
 
-COPY appConfig appConfig
+COPY servises servises
 COPY go.mod go.mod
 COPY go.sum go.sum
 
 COPY second_app .
 
-RUN go get -u \
- && go mod tidy \
- && CGO_ENABLED=0 GOOS=linux go build -o application -ldflags="-w -s" -v
+RUN go get -u 
+RUN go mod tidy 
+RUN CGO_ENABLED=0 GOOS=linux go build -o application -ldflags="-w -s" -v
 
 
 FROM alpine:latest AS final-stage

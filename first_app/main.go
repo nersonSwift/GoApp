@@ -1,7 +1,10 @@
 package main
 
 import (
-	"MyProjects/go_app/appConfig"
+	"MyProjects/go_app/models/appConfig"
+	"MyProjects/go_app/models/dbModels"
+	"MyProjects/go_app/servises/rmqServise"
+
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,60 +18,18 @@ import (
 )
 
 var config = appConfig.Get()
+var rmq = rmqServise.Connect(config.RMQConnectLink)
 
 var rmqConnect *amqp.Connection
 
-type Mess struct {
-	Message string
-}
-
 func main() {
 	fmt.Println("Start")
+
 	createCreateHandler1()
 	//createCreateHandler()
 	//createHelloHandler()
 	c1 := make(chan string)
 	<-c1
-}
-
-func createRmqConnect() {
-	rmqConnectL, err := amqp.Dial(config.RMQConnectLink)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	rmqConnect = rmqConnectL
-
-	channel, err := rmqConnect.Channel()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	queue, err := channel.QueueDeclare("add", true, false, false, false, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	mess := Mess{
-		Message: "Hello",
-	}
-	body, err := json.Marshal(mess)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	err = channel.Publish("", queue.Name, false, false, amqp.Publishing{
-		DeliveryMode: amqp.Persistent,
-		ContentType:  "text/plain",
-		Body:         body,
-	})
-
-	if err != nil {
-		fmt.Println(err)
-	}
 }
 
 func createHelloHandler() {
@@ -126,11 +87,17 @@ type Resp struct {
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("1 zapros")
-	createRmqConnect()
+	//createRmqConnect()
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
 	//createRmqConnect()
+	mess := dbModels.User{
+		ID:      1,
+		Name:    "Test",
+		Country: "ru",
+	}
+	rmq.SendMassage(mess)
 
 	fmt.Println("1 zapros")
 	w.Header().Set("Content-Type", "application/json")

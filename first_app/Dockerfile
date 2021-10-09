@@ -2,7 +2,7 @@ FROM golang:1.13.6-alpine AS build-stage
 
 WORKDIR /go/src/application
 
-COPY appConfig appConfig
+COPY servises servises
 COPY go.mod go.mod
 COPY go.sum go.sum
 
